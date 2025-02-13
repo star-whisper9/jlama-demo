@@ -1,17 +1,14 @@
 package space.sotis.jlamademo.config;
 
-import com.github.tjake.jlama.model.AbstractModel;
-import com.github.tjake.jlama.model.ModelSupport;
 import com.github.tjake.jlama.safetensors.DType;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.io.File;
+import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @Data
+@PropertySource(value = "classpath:llama.properties", encoding = "UTF-8")
 public class DefaultModelConfig implements BaseModelConfig {
     @Value("${llama.model.default.name}")
     private String modelName;
@@ -37,9 +34,8 @@ public class DefaultModelConfig implements BaseModelConfig {
     @Value("${llama.model.default.model-q-type}")
     private DType modelQType;
 
-    @Bean
-    public AbstractModel defaultModel() {
-        File model = new File(modelPath);
-        return ModelSupport.loadModel(model, memoryQType, modelQType);
-    }
+//    public AbstractModel defaultModel() {
+//        File model = new File(modelPath);
+//        return ModelSupport.loadModel(model, memoryQType, modelQType);
+//    }
 }

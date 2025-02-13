@@ -1,8 +1,11 @@
 package space.sotis.jlamademo.service;
 
 import com.github.tjake.jlama.model.AbstractModel;
+import com.github.tjake.jlama.model.ModelSupport;
 import com.github.tjake.jlama.model.functions.Generator;
 import com.github.tjake.jlama.safetensors.prompt.PromptContext;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,6 +14,7 @@ import space.sotis.jlamademo.config.DefaultModelConfig;
 import space.sotis.jlamademo.pojo.GenerationRequest;
 import space.sotis.jlamademo.pojo.GenerationResponse;
 
+import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -24,10 +28,35 @@ public class ModelService implements IModelService {
     private record loadedModel(AbstractModel model, BaseModelConfig config) {
     }
 
+    @PostConstruct
+    public void init() {
+        try {
+            AbstractModel model = ModelSupport.loadModel(
+                    new File(defaultModelConfig.getModelPath()),
+                    defaultModelConfig.getMemoryQType(),
+                    defaultModelConfig.getModelQType()
+            );
+            loadedModels.put(defaultModelConfig.getModelName(), new loadedModel(model, defaultModelConfig));
+        } catch (Exception e) {
+            log.error("加载模型时出现错误", e);
+            System.exit(500);
+        }
+    }
+
+    @PreDestroy
+    public void destroy() {
+        loadedModels.forEach((s, loadedModel) -> {
+            try {
+                loadedModel.model.close();
+            } catch (Exception e) {
+                log.error("关闭模型时出现错误", e);
+            }
+        });
+    }
+
     @Autowired
     public ModelService(DefaultModelConfig defaultModelConfig) {
         this.defaultModelConfig = defaultModelConfig;
-        loadedModels.put(defaultModelConfig.getModelName(), new loadedModel(defaultModelConfig.defaultModel(), defaultModelConfig));
     }
 
     @Override
